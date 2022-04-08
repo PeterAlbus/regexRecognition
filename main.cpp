@@ -57,11 +57,6 @@ public:
         }
         return ptr;
     }
-    NFANode* next()
-    {
-        auto itr=nextMap.begin();
-        return *(itr->second.begin());
-    }
     map<char,set<NFANode*>> getNextMap()
     {
         return nextMap;
@@ -107,8 +102,17 @@ public:
         for(int i=0;i<regex.length();i++)
         {
             char c=regex[i];
-            if(c=='('||c=='+'||c=='|')
+            if(c=='(')
             {
+                operatorStack.push(c);
+            }
+            else if(c=='+'||c=='|')
+            {
+                while(!operatorStack.empty()&&operatorStack.top()=='~')
+                {
+                    operatorStack.pop();
+                    calculate('~');
+                }
                 operatorStack.push(c);
             }
             else if(c=='*')
@@ -185,7 +189,7 @@ public:
         list<NFANode*> outputList;
         outputList.push_back(nfaMapStack.top());
         outedStateSet.insert(nfaMapStack.top()->getState());
-        while(!outputList.empty())
+        while(!outputList.empty()&&outputList.front()!=nullptr)
         {
             NFANode* nfaNode=outputList.front();
             outputList.pop_front();
@@ -452,13 +456,14 @@ public:
             }
         }
     }
-    void match(const string& temp)
+    void match(string& temp)
     {
         int currentState=0;
-        for(char c:temp)
+        for(char & c : temp)
         {
             if(c==';')
             {
+                c = '\0';
                 break;
             }
             if(c==' ')
@@ -469,11 +474,11 @@ public:
         }
         if(endStates.count(currentState))
         {
-            cout<<temp<<"--yes"<<endl;
+            cout<<setw(15)<<temp<<"--yes"<<endl;
         }
         else
         {
-            cout<<temp<<"--no"<<endl;
+            cout<<setw(15)<<temp<<"--no"<<endl;
         }
     }
 };
@@ -496,7 +501,6 @@ int main()
     dfa.outputEndStates();
     cout<<"supported char:"<<endl;
     dfa.outputCharSet();
-
     while(true)
     {
         cout<<"please input string to test(input 'exit' to quit):";
